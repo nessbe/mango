@@ -27,13 +27,29 @@ BINARY_DIR := $(BUILD_DIR)/bin
 
 TARGET := $(BINARY_DIR)/kernel.elf
 
+NASM := nasm
+
+NASM_FLAGS := -f elf32
+
+NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
+
+NASM_OBJECTS := $(NASM_SOURCES:$(SOURCE_DIR)/%.asm=$(OBJECT_DIR)/%.o)
+
+OBJECTS := $(NASM_OBJECTS)
+
 .PHONY: all clean run
 
 all: $(TARGET)
 
 clean:
+	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)
 
 run:
 
-$(TARGET):
+$(TARGET): $(OBJECTS)
+
+$(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.asm
+	@mkdir -p $(dir $@)
+	@echo "Assembling NASM file $<..."
+	@$(NASM) $(NASM_FLAGS) $< -o $@

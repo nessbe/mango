@@ -27,9 +27,11 @@ BINARY_DIR := $(BUILD_DIR)/bin
 
 TARGET := $(BINARY_DIR)/kernel.elf
 
-NASM := nasm
+NASM   := nasm
+LINKER := $(BUILD_ARCHITECTURE)-elf-ld
 
-NASM_FLAGS := -f elf32
+NASM_FLAGS   := -f elf32
+LINKER_FLAGS := -T linker.ld
 
 NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
 
@@ -48,6 +50,9 @@ clean:
 run:
 
 $(TARGET): $(OBJECTS)
+	@mkdir -p $(dir $@)
+	@echo "Linking kernel $@..."
+	@$(LINKER) $(LINKER_FLAGS) $^ -o $@
 
 $(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.asm
 	@mkdir -p $(dir $@)

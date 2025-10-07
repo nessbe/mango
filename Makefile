@@ -20,33 +20,38 @@
 BUILD_ARCHITECTURE := i686
 RUN_ARCHITECTURE   := i386
 
-SOURCE_DIR := source
-BUILD_DIR  := build
-OBJECT_DIR := $(BUILD_DIR)/obj
-BINARY_DIR := $(BUILD_DIR)/bin
+SOURCE_DIR  := source
+INCLUDE_DIR := include
+BUILD_DIR   := build
+OBJECT_DIR  := $(BUILD_DIR)/obj
+BINARY_DIR  := $(BUILD_DIR)/bin
 
 ELF_TARGET  := $(BINARY_DIR)/kernel.elf
 FLAT_TARGET := $(BINARY_DIR)/kernel.bin
 
-NASM        := nasm
-C_COMPILER  := $(BUILD_ARCHITECTURE)-elf-gcc
-LINKER      := $(BUILD_ARCHITECTURE)-elf-ld
-QEMU        := qemu-system-$(RUN_ARCHITECTURE)
-OBJECT_COPY := $(BUILD_ARCHITECTURE)-elf-objcopy
+NASM         := nasm
+C_COMPILER   := $(BUILD_ARCHITECTURE)-elf-gcc
+CPP_COMPILER := $(BUILD_ARCHITECTURE)-elf-g++
+LINKER       := $(BUILD_ARCHITECTURE)-elf-ld
+QEMU         := qemu-system-$(RUN_ARCHITECTURE)
+OBJECT_COPY  := $(BUILD_ARCHITECTURE)-elf-objcopy
 
-NASM_FLAGS        := -f elf32
-C_COMPILER_FLAGS  := -m32 -ffreestanding -nostdlib -nostartfiles -fno-pie -fno-stack-protector -Wall -Wextra
-LINKER_FLAGS      := -T linker.ld
-QEMU_FLAGS        := -kernel $(ELF_TARGET)
-OBJECT_COPY_FLAGS := -O binary
+NASM_FLAGS         := -f elf32
+C_COMPILER_FLAGS   := -I $(INCLUDE_DIR) -m32 -ffreestanding -nostdlib -nostartfiles -fno-pie -fno-stack-protector -Wall -Wextra
+CPP_COMPILER_FLAGS := -I $(INCLUDE_DIR) -m32 -ffreestanding -nostdlib -nostartfiles -fno-pie -fno-stack-protector -Wall -Wextra
+LINKER_FLAGS       := -T linker.ld
+QEMU_FLAGS         := -kernel $(ELF_TARGET)
+OBJECT_COPY_FLAGS  := -O binary
 
 NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
 C_SOURCES    := $(shell find $(SOURCE_DIR) -name "*.c")
+CPP_SOURCES  := $(shell find $(SOURCE_DIR) -name "*.cpp")
 
 NASM_OBJECTS := $(NASM_SOURCES:$(SOURCE_DIR)/%.asm=$(OBJECT_DIR)/%.o)
 C_OBJECTS    := $(C_SOURCES:$(SOURCE_DIR)/%.c=$(OBJECT_DIR)/%.o)
+CPP_OBJECTS  := $(CPP_SOURCES:$(SOURCE_DIR)/%.cpp=$(OBJECT_DIR)/%.o)
 
-OBJECTS := $(NASM_OBJECTS) $(C_OBJECTS)
+OBJECTS := $(NASM_OBJECTS) $(C_OBJECTS) $(CPP_OBJECTS)
 
 .PHONY: all clean run
 
@@ -79,3 +84,8 @@ $(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.c
 	@mkdir -p $(dir $@)
 	@echo "Compiling C file $<..."
 	@$(C_COMPILER) $(C_COMPILER_FLAGS) -c $< -o $@
+
+$(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	@echo "Compiling C++ file $<..."
+	@$(CPP_COMPILER) $(CPP_COMPILER_FLAGS) -c $< -o $@

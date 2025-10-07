@@ -29,20 +29,24 @@ ELF_TARGET  := $(BINARY_DIR)/kernel.elf
 FLAT_TARGET := $(BINARY_DIR)/kernel.bin
 
 NASM        := nasm
+C_COMPILER  := $(BUILD_ARCHITECTURE)-elf-gcc
 LINKER      := $(BUILD_ARCHITECTURE)-elf-ld
 QEMU        := qemu-system-$(RUN_ARCHITECTURE)
 OBJECT_COPY := $(BUILD_ARCHITECTURE)-elf-objcopy
 
 NASM_FLAGS        := -f elf32
+C_COMPILER_FLAGS  := -m32 -ffreestanding -nostdlib -nostartfiles -fno-pie -fno-stack-protector -Wall -Wextra
 LINKER_FLAGS      := -T linker.ld
 QEMU_FLAGS        := -kernel $(ELF_TARGET)
 OBJECT_COPY_FLAGS := -O binary
 
 NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
+C_SOURCES    := $(shell find $(SOURCE_DIR) -name "*.c")
 
 NASM_OBJECTS := $(NASM_SOURCES:$(SOURCE_DIR)/%.asm=$(OBJECT_DIR)/%.o)
+C_OBJECTS    := $(C_SOURCES:$(SOURCE_DIR)/%.c=$(OBJECT_DIR)/%.o)
 
-OBJECTS := $(NASM_OBJECTS)
+OBJECTS := $(NASM_OBJECTS) $(C_OBJECTS)
 
 .PHONY: all clean run
 
@@ -70,3 +74,8 @@ $(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.asm
 	@mkdir -p $(dir $@)
 	@echo "Assembling NASM file $<..."
 	@$(NASM) $(NASM_FLAGS) $< -o $@
+
+$(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.c
+	@mkdir -p $(dir $@)
+	@echo "Compiling C file $<..."
+	@$(C_COMPILER) $(C_COMPILER_FLAGS) -c $< -o $@

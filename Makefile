@@ -29,9 +29,11 @@ TARGET := $(BINARY_DIR)/kernel.elf
 
 NASM   := nasm
 LINKER := $(BUILD_ARCHITECTURE)-elf-ld
+QEMU   := qemu-system-$(RUN_ARCHITECTURE)
 
 NASM_FLAGS   := -f elf32
 LINKER_FLAGS := -T linker.ld
+QEMU_FLAGS   := -kernel $(TARGET)
 
 NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
 
@@ -47,7 +49,9 @@ clean:
 	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)
 
-run:
+run: $(TARGET)
+	@echo "Running kernel $<..."
+	@$(QEMU) $(QEMU_FLAGS)
 
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(dir $@)

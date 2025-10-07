@@ -17,13 +17,15 @@
 ;
 ; For more details, see the LICENSE file at the root of the project.
 
-[bits 16]
+[bits 32]
 
 segment .text
 	global start
 
+	extern kernel_main
+
 	start:
-		jmp .hang
+		call kernel_main
 
 	.hang:
 		hlt

@@ -25,15 +25,18 @@ BUILD_DIR  := build
 OBJECT_DIR := $(BUILD_DIR)/obj
 BINARY_DIR := $(BUILD_DIR)/bin
 
-TARGET := $(BINARY_DIR)/kernel.elf
+ELF_TARGET  := $(BINARY_DIR)/kernel.elf
+FLAT_TARGET := $(BINARY_DIR)/kernel.bin
 
-NASM   := nasm
-LINKER := $(BUILD_ARCHITECTURE)-elf-ld
-QEMU   := qemu-system-$(RUN_ARCHITECTURE)
+NASM        := nasm
+LINKER      := $(BUILD_ARCHITECTURE)-elf-ld
+QEMU        := qemu-system-$(RUN_ARCHITECTURE)
+OBJECT_COPY := $(BUILD_ARCHITECTURE)-elf-objcopy
 
-NASM_FLAGS   := -f elf32
-LINKER_FLAGS := -T linker.ld
-QEMU_FLAGS   := -kernel $(TARGET)
+NASM_FLAGS        := -f elf32
+LINKER_FLAGS      := -T linker.ld
+QEMU_FLAGS        := -kernel $(ELF_TARGET)
+OBJECT_COPY_FLAGS := -O binary
 
 NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
 
@@ -43,17 +46,22 @@ OBJECTS := $(NASM_OBJECTS)
 
 .PHONY: all clean run
 
-all: $(TARGET)
+all: $(FLAT_TARGET)
 
 clean:
 	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)
 
-run: $(TARGET)
+run: $(ELF_TARGET)
 	@echo "Running kernel $<..."
 	@$(QEMU) $(QEMU_FLAGS)
 
-$(TARGET): $(OBJECTS)
+$(FLAT_TARGET): $(ELF_TARGET)
+	@mkdir -p $(dir $@)
+	@echo "Creating flat binary kernel $@..."
+	@$(OBJECT_COPY) $(OBJECT_COPY_FLAGS) $< $@
+
+$(ELF_TARGET): $(OBJECTS)
 	@mkdir -p $(dir $@)
 	@echo "Linking kernel $@..."
 	@$(LINKER) $(LINKER_FLAGS) $^ -o $@

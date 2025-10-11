@@ -24,13 +24,16 @@ OBJECT_DIR := $(BUILD_DIR)/obj
 
 ARCHITECTURE := i686
 
-TARGET := $(BINARY_DIR)/kernel.elf
+ELF_TARGET   := $(BINARY_DIR)/kernel.elf
+IMAGE_TARGET := $(BINARY_DIR)/kernel.img
 
 NASM   := nasm
 LINKER := $(ARCHITECTURE)-elf-ld
+DD     := dd
 
 NASM_FLAGS   :=
 LINKER_FLAGS := -T linker.ld
+DD_FLAGS     :=
 
 NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
 NASM_OBJECTS := $(NASM_SOURCES:$(SOURCE_DIR)/%.asm=$(OBJECT_DIR)/%.o)
@@ -41,16 +44,25 @@ BOOTLOADER_OBJECT := $(OBJECT_DIR)/boot/bootloader.o
 ALL_OBJECTS      := $(NASM_OBJECTS)
 FILTERED_OBJECTS := $(filter-out $(BOOTLOADER_OBJECT), $(ALL_OBJECTS))
 
-all: $(BOOTLOADER_OBJECT) $(TARGET)
+NO_OUTPUT := >/dev/null 2>&1
+
+all: $(IMAGE_TARGET)
 
 clean:
 	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)
 
-$(TARGET): $(FILTERED_OBJECTS)
+$(ELF_TARGET): $(FILTERED_OBJECTS)
 	@mkdir -p $(dir $@)
-	@echo "Linking kernel $@..."
+	@echo "Linking ELF kernel $@..."
 	@$(LINKER) $(LINKER_FLAGS) $^ -o $@
+
+$(IMAGE_TARGET): $(BOOTLOADER_OBJECT) $(ELF_TARGET)
+	@mkdir -p $(dir $@)
+	@echo "Generating disk image kernel $@..."
+	@$(DD) $(DD_FLAGS) if=/dev/zero            of=$(IMAGE_TARGET)              bs=512 count=2048 $(NO_OUTPUT)
+	@$(DD) $(DD_FLAGS) if=$(BOOTLOADER_OBJECT) of=$(IMAGE_TARGET) conv=notrunc bs=512 count=1    $(NO_OUTPUT)
+	@$(DD) $(DD_FLAGS) if=$(ELF_TARGET)        of=$(IMAGE_TARGET) conv=notrunc bs=512 seek=1     $(NO_OUTPUT)
 
 $(BOOTLOADER_OBJECT): $(BOOTLOADER_SOURCE)
 	@mkdir -p $(dir $@)

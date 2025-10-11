@@ -18,10 +18,18 @@
 # For more details, see the LICENSE file at the root of the project.
 
 BUILD_DIR  := build
+SOURCE_DIR := source
 BINARY_DIR := $(BUILD_DIR)/bin
 OBJECT_DIR := $(BUILD_DIR)/obj
 
 TARGET := $(BINARY_DIR)/kernel.elf
+
+NASM         := nasm
+NASM_FLAGS   :=
+NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
+NASM_OBJECTS := $(NASM_SOURCES:$(SOURCE_DIR)/%.asm=$(OBJECT_DIR)/%.o)
+
+OBJECTS := $(NASM_OBJECTS)
 
 all: $(TARGET)
 
@@ -29,6 +37,11 @@ clean:
 	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)
 
-$(TARGET):
+$(TARGET): $(OBJECTS)
+
+$(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.asm
+	@mkdir -p $(dir $@)
+	@echo "Assembling NASM file $<..."
+	@$(NASM) $(NASM_FLAGS) -f elf32 $< -o $@
 
 .PHONY: all clean

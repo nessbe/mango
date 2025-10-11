@@ -29,7 +29,11 @@ NASM_FLAGS   :=
 NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
 NASM_OBJECTS := $(NASM_SOURCES:$(SOURCE_DIR)/%.asm=$(OBJECT_DIR)/%.o)
 
-OBJECTS := $(NASM_OBJECTS)
+BOOTLOADER_SOURCE := $(SOURCE_DIR)/boot/bootloader.asm
+BOOTLOADER_OBJECT := $(OBJECT_DIR)/boot/bootloader.o
+
+ALL_OBJECTS      := $(NASM_OBJECTS)
+FILTERED_OBJECTS := $(filter-out $(BOOTLOADER_OBJECT), $(ALL_OBJECTS))
 
 all: $(TARGET)
 
@@ -37,7 +41,12 @@ clean:
 	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)
 
-$(TARGET): $(OBJECTS)
+$(TARGET): $(BOOTLOADER_OBJECT) $(FILTERED_OBJECTS)
+
+$(BOOTLOADER_OBJECT): $(BOOTLOADER_SOURCE)
+	@mkdir -p $(dir $@)
+	@echo "Assembling bootloader $<..."
+	@$(NASM) $(NASM_FLAGS) -f bin $< -o $@
 
 $(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.asm
 	@mkdir -p $(dir $@)

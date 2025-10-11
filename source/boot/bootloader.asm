@@ -21,7 +21,26 @@
 [org 0x7C00]
 
 start:
-	hlt
+	mov si, message
+	call print_string
+
+print_string:
+	lodsb
+	or al, al
+	jz .string_end
+
+	call print_char
+	jmp print_string
+
+.string_end:
+	ret
+
+print_char:
+	mov ah, 0x0E
+	int 0x10
+	ret
+
+message db "Mango booted successfully!", 0
 
 times 510 - ($ - $$) db 0
 dw 0xAA55

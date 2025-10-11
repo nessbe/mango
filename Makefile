@@ -22,10 +22,16 @@ SOURCE_DIR := source
 BINARY_DIR := $(BUILD_DIR)/bin
 OBJECT_DIR := $(BUILD_DIR)/obj
 
+ARCHITECTURE := i686
+
 TARGET := $(BINARY_DIR)/kernel.elf
 
-NASM         := nasm
+NASM   := nasm
+LINKER := $(ARCHITECTURE)-elf-ld
+
 NASM_FLAGS   :=
+LINKER_FLAGS := -T linker.ld
+
 NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
 NASM_OBJECTS := $(NASM_SOURCES:$(SOURCE_DIR)/%.asm=$(OBJECT_DIR)/%.o)
 
@@ -35,13 +41,16 @@ BOOTLOADER_OBJECT := $(OBJECT_DIR)/boot/bootloader.o
 ALL_OBJECTS      := $(NASM_OBJECTS)
 FILTERED_OBJECTS := $(filter-out $(BOOTLOADER_OBJECT), $(ALL_OBJECTS))
 
-all: $(TARGET)
+all: $(BOOTLOADER_OBJECT) $(TARGET)
 
 clean:
 	@echo "Cleaning..."
 	@rm -rf $(BUILD_DIR)
 
-$(TARGET): $(BOOTLOADER_OBJECT) $(FILTERED_OBJECTS)
+$(TARGET): $(FILTERED_OBJECTS)
+	@mkdir -p $(dir $@)
+	@echo "Linking kernel $@..."
+	@$(LINKER) $(LINKER_FLAGS) $^ -o $@
 
 $(BOOTLOADER_OBJECT): $(BOOTLOADER_SOURCE)
 	@mkdir -p $(dir $@)

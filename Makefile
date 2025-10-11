@@ -22,18 +22,21 @@ SOURCE_DIR := source
 BINARY_DIR := $(BUILD_DIR)/bin
 OBJECT_DIR := $(BUILD_DIR)/obj
 
-ARCHITECTURE := i686
+BUILD_ARCHITECTURE := i686
+RUN_ARCHITECTURE   := i386
 
 ELF_TARGET   := $(BINARY_DIR)/kernel.elf
 IMAGE_TARGET := $(BINARY_DIR)/kernel.img
 
 NASM   := nasm
-LINKER := $(ARCHITECTURE)-elf-ld
+LINKER := $(BUILD_ARCHITECTURE)-elf-ld
 DD     := dd
+QEMU   := qemu-system-$(RUN_ARCHITECTURE)
 
 NASM_FLAGS   :=
 LINKER_FLAGS := -T linker.ld
 DD_FLAGS     :=
+QEMU_FLAGS   := -serial stdio -m 512M
 
 NASM_SOURCES := $(shell find $(SOURCE_DIR) -name "*.asm")
 NASM_OBJECTS := $(NASM_SOURCES:$(SOURCE_DIR)/%.asm=$(OBJECT_DIR)/%.o)
@@ -47,6 +50,10 @@ FILTERED_OBJECTS := $(filter-out $(BOOTLOADER_OBJECT), $(ALL_OBJECTS))
 NO_OUTPUT := >/dev/null 2>&1
 
 all: $(IMAGE_TARGET)
+
+run: $(IMAGE_TARGET)
+	@echo "Running kernel disk image $< with $(QEMU)..."
+	@$(QEMU) $(QEMU_FLAGS) -drive format=raw,file=build/bin/kernel.img
 
 clean:
 	@echo "Cleaning..."
@@ -74,4 +81,4 @@ $(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.asm
 	@echo "Assembling NASM file $<..."
 	@$(NASM) $(NASM_FLAGS) -f elf32 $< -o $@
 
-.PHONY: all clean
+.PHONY: all run clean

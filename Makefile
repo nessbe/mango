@@ -1,0 +1,23 @@
+# File:       Makefile
+# Project:    mango
+# Repository: https://github.com/nessbe/mango
+#
+# Copyright (c) 2025 nessbe
+# This file is part of the citadel project and is licensed
+# under the terms specified in the LICENSE file located at the
+# root of this repository.
+#
+# Unless required by applicable law or agreed to in writing,
+# the software is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the LICENSE file for details.
+
+BUILD_DIR := build
+
+ifndef verbose
+	SILENT = @
+endif
+
+clean:
+	@echo "Cleaning..."
+	$(SILENT) rm -rf $(BUILD_DIR)
